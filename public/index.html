@@ -1,0 +1,95 @@
+<!-- public/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Recommendations</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .recommendations {
+      margin-top: 30px;
+    }
+    .product {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+    .product h3 {
+      margin: 0 0 10px 0;
+    }
+    .product p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Product Recommendations</h1>
+    <div>
+      <input type="text" id="customerName" placeholder="Enter Customer Name" />
+      <button onclick="getRecommendations()">Get Recommendations</button>
+    </div>
+    <div class="recommendations" id="recommendations"></div>
+  </div>
+
+  <script>
+    async function getRecommendations() {
+      const customerName = document.getElementById('customerName').value.trim();
+      const recommendationsDiv = document.getElementById('recommendations');
+      recommendationsDiv.innerHTML = ''; // Clear previous results
+
+      if (!customerName) {
+        recommendationsDiv.innerHTML = '<p>Please enter a customer name.</p>';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/recommendations?customerName=${encodeURIComponent(customerName)}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          recommendationsDiv.innerHTML = `<p style="color:red;">Error: ${errorText}</p>`;
+          return;
+        }
+
+        const recommendations = await response.json();
+
+        if (recommendations.length === 0) {
+          recommendationsDiv.innerHTML = '<p>No recommendations available.</p>';
+          return;
+        }
+
+        recommendations.forEach(product => {
+          const productDiv = document.createElement('div');
+          productDiv.className = 'product';
+          productDiv.innerHTML = `
+            <h3>${product.rank}. ${product.productName} - ${product.price}</h3>
+            <p><strong>Score:</strong> ${(product.score * 100).toFixed(2)}%</p>
+            <p>${product.explanation}</p>
+          `;
+          recommendationsDiv.appendChild(productDiv);
+        });
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        recommendationsDiv.innerHTML = '<p style="color:red;">An unexpected error occurred.</p>';
+      }
+    }
+  </script>
+</body>
+</html>
